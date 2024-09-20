@@ -32,7 +32,7 @@ def createSoup(url):
 def crawling():
     # 옵션 추가하기
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless") # 웹 브라우저 안띄우기
+    options.add_argument("--headless") # 웹 브라우저 안띄우기
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
@@ -40,21 +40,56 @@ def crawling():
     browser.get(url_list[0])
     WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.XPATH,"//*[@id='root']/div[3]/div[2]/div[2]/section[1]/div/section/div/div[2]/div/div/div/div")))
 
-    products = browser.find_element(By.XPATH,"//*[@id='root']/div[3]/div[2]/div[2]/section[1]/div/section/div/div[2]/div/div/div/div").find_elements(By.CLASS_NAME,"fr-ec-product-tile-resize-wrapper")
+    products = browser.find_element(By.CLASS_NAME,"fr-ec-product-collection").find_elements(By.CLASS_NAME,"fr-ec-product-tile-resize-wrapper")
 
-    for product in products:
-         # 제품 상세 URL
-            print(product)
-            url = product.find_element(By.CLASS_NAME, "fr-ec-tile").get_property("href")
+    for i in range(len(products)):
+            product = products[i]
+
+            # 제품 상세 URL
+            url = product.find_element(By.TAG_NAME, "a").get_attribute("href")
             browser.get(url)
-            WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, "body")))
 
-            try:
-                # 제품 설명을 가져오기
-                product_description = browser.find_element(By.CLASS_NAME, "fr-ec-gutter-container").find_element(By.TAG_NAME, "p").text
-                print(product_description)
-            except Exception as e:
-                print(f"오류 발생: {e}")
+            # browser가 출력될 때까지 대기
+            WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.CLASS_NAME, "fr-ec-template-pdp"))) 
+
+            code = browser.find_element(By.CLASS_NAME,"fr-ec-template-pdp") \
+                        .find_element(By.CLASS_NAME,"fr-ec-layout") \
+                        .find_element(By.CLASS_NAME,"fr-ec-gutter-container") \
+                        .find_element(By.CLASS_NAME,"fr-ec-caption").text
+
+            # 제품 상세 설명 Click
+            browser.find_element(By.CLASS_NAME,"fr-ec-template-pdp") \
+                        .find_element(By.CLASS_NAME,"fr-ec-layout") \
+                        .find_element(By.CLASS_NAME,"fr-ec-gutter-container") \
+                        .find_element(By.TAG_NAME,"legend").click()
+            WebDriverWait(browser, 20).until(EC.presence_of_all_elements_located((By.ID,"productLongDescription-content")))
+         
+            description = browser.find_element(By.CLASS_NAME,"fr-ec-template-pdp") \
+                        .find_element(By.CLASS_NAME,"fr-ec-layout") \
+                        .find_element(By.CLASS_NAME,"fr-ec-gutter-container") \
+                        .find_element(By.ID,"productLongDescription-content") \
+                        .find_element(By.CLASS_NAME,"fr-ec-body").text
+                        
+            print(code)
+            print(description)
+
+            # 상품 리스트 페이지로 돌아가기
+            browser.back()
+
+            # 다시 제품 목록 로드 대기
+            WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.XPATH, "//div[contains(@class, 'fr-ec-product-tile-resize-wrapper')]")))
+            products = browser.find_elements(By.XPATH, "//div[contains(@class, 'fr-ec-product-tile-resize-wrapper')]")  # 요소를 다시 찾기
+            
+            
+
+
+
+   
+
+           
+           
+           
+
 
 
 crawling()
