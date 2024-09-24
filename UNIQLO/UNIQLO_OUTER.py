@@ -6,7 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 
 import requests
-import json
+# import json
 import time
 
 # OUTER - [파카&블루종, 재킷, 감탄 재킷, 경량 패딩, 코트, 다운]
@@ -33,12 +33,12 @@ def createSoup(url):
 def crawling():
     # 옵션 추가하기
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless") # 웹 브라우저 안띄우기
+    options.add_argument("--headless") # 웹 브라우저 안띄우기
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
     browser = webdriver.Chrome(options = options)
-    browser.maximize_window()
+    # browser.maximize_window()
     action = ActionChains(browser)
 
     browser.get(url_list[0])
@@ -49,50 +49,48 @@ def crawling():
     for i in range(len(products)):
         product = products[i]
 
-        # 제품 상세 URL
+        # 제품 상세 URL 가져오기
         url = product.find_element(By.TAG_NAME, "a").get_attribute("href")
         browser.get(url)
-        time.sleep(3)
+        time.sleep(2)
 
-        # browser가 출력될 때까지 대기
         # WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "fr-ec-template-pdp"))) 
-        action.move_to_element(browser.find_element(By.XPATH,"//*[@id='root']/div[4]/div/section[1]/div/div[1]/div[2]/hr[5]")).perform()
-        # browser.execute_script("window.scrollTo(0, 2080)")
-        time.sleep(5)
+        # 스크롤 이동하기
+        action.move_to_element(browser.find_element(By.XPATH,"//*[@id='productExchangeAndReturnDescription']")).perform()
+        time.sleep(2)
 
-        
-        # 제품 상세 설명 Click
+        # 제품 상세 / 제품 상세 설명 Click
         gutter_container = browser.find_element(By.XPATH,"//*[@id='root']/div[4]/div/section[1]/div/div[1]/div[2]")
         # gutter_container.find_element(By.TAG_NAME,"button").click()
-        time.sleep(5)
+        time.sleep(2)
         # WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME,"rah-static--height-zero")))
         
-        # time.sleep(10)
-        
         code = gutter_container.find_element(By.CLASS_NAME,"fr-ec-caption").text
-
-        isProductFeatures = gutter_container.find_element(By.ID,"productFeatures-content")
-        if isProductFeatures:
-            print("[제품 상세]")
-            description_list = []
-            descriptions = isProductFeatures.find_elements(By.CLASS_NAME,"fr-ec-content-alignment--direction-row")
-            for description in descriptions:
-                description_map = {description.find_element(By.CLASS_NAME,"fr-ec-image").find_element(By.TAG_NAME,"img").get_attribute("src") : description.find_element(By.CLASS_NAME,"fr-ec-content-alignment--direction-column").find_element(By.CLASS_NAME,"fr-ec-body").text}
-                description_list.append(description_map)
-            print(description_list)
-        # elif gutter_container.find_element(By.XPATH,"//*[@id='productLongDescription-content']"):
-        #     print("제품 상세 설명")
-        #     description = browser.find_element(By.CLASS_NAME,"fr-ec-template-pdp") \
-        #         .find_element(By.CLASS_NAME,"fr-ec-layout") \
-        #         .find_element(By.CLASS_NAME,"fr-ec-gutter-container") \
-        #         .find_element(By.ID,"productLongDescription-content") \
-        #         .find_element(By.CLASS_NAME,"fr-ec-body").text
-        # else: 
-        #     description = "설명이 없습니다."
-        
-                         
         print(code)
-        # print(description)
+
+        try:
+            isProductFeatures = gutter_container.find_element(By.ID,"productFeatures-content")
+            if isProductFeatures:
+                print("[제품 상세]")
+                description_list = []
+                descriptions = isProductFeatures.find_elements(By.CLASS_NAME,"fr-ec-content-alignment--direction-row")
+                for description in descriptions:
+                    description_map = {description.find_element(By.CLASS_NAME,"fr-ec-image").find_element(By.TAG_NAME,"img").get_attribute("src") : description.find_element(By.CLASS_NAME,"fr-ec-content-alignment--direction-column").find_element(By.CLASS_NAME,"fr-ec-body").text}
+                    description_list.append(description_map)
+                print(description_list)
+        except Exception as e:
+            print("제품 상세가 존재하지 않습니다.")
+      
+        try:
+            gutter_container.find_element(By.ID,"productLongDescription").click()
+            time.sleep(1)
+            isProductLongDescription = gutter_container.find_element(By.ID,"productLongDescription-content")
+            if isProductLongDescription:
+                print("[제품 상세 설명]")
+                print(isProductLongDescription.find_element(By.CLASS_NAME,"fr-ec-body").text)
+        except Exception as e:
+            print("제품 상세 설명이 존재하지 않습니다.")
+        
         print("============================================================\n")
 
         # 상품 리스트 페이지로 돌아가기
