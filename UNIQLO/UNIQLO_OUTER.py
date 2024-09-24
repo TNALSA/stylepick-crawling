@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import ActionChains
 
 import requests
 import json
@@ -32,11 +33,14 @@ def createSoup(url):
 def crawling():
     # 옵션 추가하기
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless") # 웹 브라우저 안띄우기
+    # options.add_argument("--headless") # 웹 브라우저 안띄우기
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
     browser = webdriver.Chrome(options = options)
+    browser.maximize_window()
+    action = ActionChains(browser)
+
     browser.get(url_list[0])
     WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.XPATH,"//*[@id='root']/div[3]/div[2]/div[2]/section[1]/div/section/div/div[2]/div/div/div/div")))
 
@@ -48,16 +52,21 @@ def crawling():
         # 제품 상세 URL
         url = product.find_element(By.TAG_NAME, "a").get_attribute("href")
         browser.get(url)
+        time.sleep(3)
 
         # browser가 출력될 때까지 대기
-        WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "fr-ec-template-pdp"))) 
+        # WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "fr-ec-template-pdp"))) 
+        action.move_to_element(browser.find_element(By.XPATH,"//*[@id='root']/div[4]/div/section[1]/div/div[1]/div[2]/hr[5]")).perform()
+        # browser.execute_script("window.scrollTo(0, 2080)")
+        time.sleep(5)
 
+        
         # 제품 상세 설명 Click
         gutter_container = browser.find_element(By.XPATH,"//*[@id='root']/div[4]/div/section[1]/div/div[1]/div[2]")
-        gutter_container.find_element(By.TAG_NAME,"button").click()
-        # WebDriverWait(browser, 10).until(EC.visibility_of_all_elements_located((By.CLASS_NAME,"rah-static--height-zero")))
-        WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME,"rah-static--height-zero")))
-        # WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME,"rah-static")))
+        # gutter_container.find_element(By.TAG_NAME,"button").click()
+        time.sleep(5)
+        # WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME,"rah-static--height-zero")))
+        
         # time.sleep(10)
         
         code = gutter_container.find_element(By.CLASS_NAME,"fr-ec-caption").text
@@ -71,9 +80,6 @@ def crawling():
                 description_map = {description.find_element(By.CLASS_NAME,"fr-ec-image").find_element(By.TAG_NAME,"img").get_attribute("src") : description.find_element(By.CLASS_NAME,"fr-ec-content-alignment--direction-column").find_element(By.CLASS_NAME,"fr-ec-body").text}
                 description_list.append(description_map)
             print(description_list)
-            
-
-             
         # elif gutter_container.find_element(By.XPATH,"//*[@id='productLongDescription-content']"):
         #     print("제품 상세 설명")
         #     description = browser.find_element(By.CLASS_NAME,"fr-ec-template-pdp") \
@@ -83,6 +89,7 @@ def crawling():
         #         .find_element(By.CLASS_NAME,"fr-ec-body").text
         # else: 
         #     description = "설명이 없습니다."
+        
                          
         print(code)
         # print(description)
