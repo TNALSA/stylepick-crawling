@@ -33,12 +33,12 @@ def createSoup(url):
 def crawling():
     # 옵션 추가하기
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless") # 웹 브라우저 안띄우기
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--headless") # 웹 브라우저 안띄우기
+    # options.add_argument("--no-sandbox")
+    # options.add_argument("--disable-dev-shm-usage")
 
     browser = webdriver.Chrome(options = options)
-    # browser.maximize_window()
+    browser.maximize_window()
     action = ActionChains(browser)
 
     browser.get(url_list[0])
@@ -52,8 +52,34 @@ def crawling():
         # 제품 상세 URL 가져오기
         url = product.find_element(By.TAG_NAME, "a").get_attribute("href")
         browser.get(url)
-        time.sleep(2)
+        time.sleep(10)
 
+        option = browser.find_element(By.XPATH,"//*[@id='root']/div[4]/div/section[1]/div/div[2]")
+        # 제품명
+        name = option.find_element(By.CLASS_NAME,"fr-ec-gutter-container").find_element(By.TAG_NAME,"ul").find_element(By.TAG_NAME,"h1").text
+        print("제품명: "+name+"\n")
+
+        # 색상
+        colors = []
+        color_list = option.find_element(By.ID,"product-color-picker").find_elements(By.TAG_NAME,"li")
+        for color in color_list:
+            color_map = {color.find_element(By.TAG_NAME,"input").get_attribute("aria-label") : color.find_element(By.TAG_NAME,"input").get_attribute("value")}
+            colors.append(color_map)
+        print("색상: "+str(colors)+"\n")
+
+        # 사이즈
+        sizes = []
+        size_list = option.find_element(By.ID,"product-size-picker").find_elements(By.TAG_NAME,"li")
+        for size in size_list:
+            sizes.append(size.find_element(By.TAG_NAME,"label").find_element(By.CLASS_NAME,"fr-ec-chip__label-text").text)
+        print("사이즈: "+str(sizes)+"\n")
+
+        #가격
+        price = option.find_element(By.XPATH,"//*[@id='root']/div[4]/div/section[1]/div/div[2]/div[4]/div[2]/div[1]/div/div/p").text
+        print("가격: "+price+"\n")
+
+        time.sleep(3)
+        
         # WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "fr-ec-template-pdp"))) 
         # 스크롤 이동하기
         action.move_to_element(browser.find_element(By.XPATH,"//*[@id='productExchangeAndReturnDescription']")).perform()
@@ -99,5 +125,6 @@ def crawling():
         # 다시 제품 목록 로드 대기
         WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.XPATH, "//div[contains(@class, 'fr-ec-product-tile-resize-wrapper')]")))
         products = browser.find_elements(By.XPATH, "//div[contains(@class, 'fr-ec-product-tile-resize-wrapper')]")  # 요소를 다시 찾기
-                
+
+    browser.quit()           
 crawling()
