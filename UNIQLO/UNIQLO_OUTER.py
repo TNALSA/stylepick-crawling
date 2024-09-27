@@ -17,13 +17,13 @@ url_list = ["https://www.uniqlo.com/kr/ko/men/outerwear/parkas-and-blousons?path
             "https://www.uniqlo.com/kr/ko/men/outerwear/coats?path=%2C%2C98233%2C", # 코트
             "https://www.uniqlo.com/kr/ko/men/outerwear/down?path=%2C%2C98234%2C"] # 다운
 
-headers = {
+def createSoup(url):
+    headers = {
     "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
     "Accept-Language":"ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
     "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
-}
+    }
 
-def createSoup(url):
     res = requests.get(url, headers=headers)
     res.raise_for_status()
 
@@ -31,11 +31,11 @@ def createSoup(url):
     return soup
 
 def crawling():
-    # 옵션 추가하기
+    # Webdriver 옵션
     options = webdriver.ChromeOptions()
     # options.add_argument("--headless") # 웹 브라우저 안띄우기
-    # options.add_argument("--no-sandbox")
-    # options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
     browser = webdriver.Chrome(options = options)
     browser.maximize_window()
@@ -74,14 +74,11 @@ def crawling():
             sizes.append(size.find_element(By.TAG_NAME,"label").find_element(By.CLASS_NAME,"fr-ec-chip__label-text").text)
         print("사이즈: "+str(sizes)+"\n")
 
-        #가격
+        #가격 (Windows 환경에선 문제없음. MacOS에서 가격 정보가 안뜨는 문제점이 있음.)
         price = option.find_element(By.XPATH,"//*[@id='root']/div[4]/div/section[1]/div/div[2]/div[4]/div[2]/div[1]/div/div/p").text
         print("가격: "+price+"\n")
 
-        time.sleep(3)
-        
-        # WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "fr-ec-template-pdp"))) 
-        # 스크롤 이동하기
+        # 스크롤 이동
         action.move_to_element(browser.find_element(By.XPATH,"//*[@id='productExchangeAndReturnDescription']")).perform()
         time.sleep(2)
 
@@ -91,9 +88,11 @@ def crawling():
         time.sleep(2)
         # WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME,"rah-static--height-zero")))
         
+        # 제품 코드 crawling
         code = gutter_container.find_element(By.CLASS_NAME,"fr-ec-caption").text
-        print(code)
+        print(code+"\n")
 
+        # 제품 상세 crawling
         try:
             isProductFeatures = gutter_container.find_element(By.ID,"productFeatures-content")
             if isProductFeatures:
@@ -103,10 +102,11 @@ def crawling():
                 for description in descriptions:
                     description_map = {description.find_element(By.CLASS_NAME,"fr-ec-image").find_element(By.TAG_NAME,"img").get_attribute("src") : description.find_element(By.CLASS_NAME,"fr-ec-content-alignment--direction-column").find_element(By.CLASS_NAME,"fr-ec-body").text}
                     description_list.append(description_map)
-                print(description_list)
+                print(description_list+"\n")
         except Exception as e:
             print("제품 상세가 존재하지 않습니다.")
       
+        # 제품 상세 설명 crawling
         try:
             gutter_container.find_element(By.ID,"productLongDescription").click()
             time.sleep(1)
@@ -116,7 +116,6 @@ def crawling():
                 print(isProductLongDescription.find_element(By.CLASS_NAME,"fr-ec-body").text)
         except Exception as e:
             print("제품 상세 설명이 존재하지 않습니다.")
-        
         print("============================================================\n")
 
         # 상품 리스트 페이지로 돌아가기
@@ -126,5 +125,5 @@ def crawling():
         WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.XPATH, "//div[contains(@class, 'fr-ec-product-tile-resize-wrapper')]")))
         products = browser.find_elements(By.XPATH, "//div[contains(@class, 'fr-ec-product-tile-resize-wrapper')]")  # 요소를 다시 찾기
 
+    # 브라우저 종료
     browser.quit()           
-crawling()
